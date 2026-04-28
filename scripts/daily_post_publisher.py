@@ -5,7 +5,7 @@ Uses environment variables for secrets (set via GitHub Secrets).
 """
 import json, os, sys, time, requests
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -21,16 +21,33 @@ def log(msg):
     ts = datetime.now(TZ).strftime('%Y-%m-%d %H:%M:%S')
     print(f"[{ts} IL] {msg}", flush=True)
 
-today_il = datetime.now(TZ).strftime('%Y-%m-%d')
-schedule = json.loads(SCHEDULE_FILE.read_text(encoding='utf-8'))
-todays = [p for p in schedule if p['publish_date'] == today_il]
+now_il = datetime.now(TZ)
+il_hour = now_il.hour
 
-if not todays:
-    log(f"No post scheduled for {today_il} — exiting cleanly")
+# Publishing window: 22:00-23:59 IL (prime), or 00:00-05:59 IL (recovery for delayed cron)
+# Outside this window → wait
+if il_hour >= 22:
+    # Prime window — target today's post
+    target_date = now_il.strftime('%Y-%m-%d')
+    log(f"Prime window (hour={il_hour}) — target {target_date}")
+elif il_hour < 6:
+    # Recovery window — target yesterday's post (in case 22:00 cron was delayed past midnight)
+    yesterday = now_il.replace(hour=12) - timedelta(days=1)
+    target_date = yesterday.strftime('%Y-%m-%d')
+    log(f"Recovery window (hour={il_hour}) — target {target_date}")
+else:
+    log(f"Outside publishing window (hour={il_hour}) — waiting for 22:00 IL")
     sys.exit(0)
 
-post = todays[0]
-log(f"Found post #{post['post_num']} for {today_il}")
+schedule = json.loads(SCHEDULE_FILE.read_text(encoding='utf-8'))
+matches = [p for p in schedule if p['publish_date'] == target_date]
+
+if not matches:
+    log(f"No post scheduled for {target_date} — exiting cleanly")
+    sys.exit(0)
+
+post = matches[0]
+log(f"Found post #{post['post_num']} for {target_date}")
 
 # Check if already published today (idempotency)
 published = []
