@@ -7,7 +7,6 @@ import json, os, sys, time, requests
 from pathlib import Path
 from datetime import datetime
 from zoneinfo import ZoneInfo
-from PIL import Image
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SCHEDULE_FILE = REPO_ROOT / "posts_schedule.json"
@@ -46,22 +45,10 @@ if not img_local.exists():
     log(f"FATAL: Image not found: {img_local}")
     sys.exit(1)
 
-# Resize to 1080×1350 (4:5 portrait)
-img = Image.open(img_local).convert('RGB')
-w, h = img.size
-target = 4/5
-if w/h > target:
-    new_w = int(h*target); left = (w-new_w)//2
-    cropped = img.crop((left, 0, left+new_w, h))
-elif h > 0 and w/h < target:
-    new_h = int(w/target); top = max(0, (h-new_h)//4)
-    cropped = img.crop((0, top, w, top+new_h)) if h > new_h else img
-else:
-    cropped = img
-resized = cropped.resize((1080, 1350), Image.LANCZOS)
-out = "/tmp/daily_post.jpg" if os.name != 'nt' else "C:/temp/daily_post.jpg"
-Path(out).parent.mkdir(exist_ok=True, parents=True)
-resized.save(out, "JPEG", quality=95)
+# Image is pre-resized to 1080×1350 in the repo. Use raw GitHub URL directly.
+GITHUB_REPO = "sivanpmu-oss/linpro-automation"
+public_url = f"https://raw.githubusercontent.com/{GITHUB_REPO}/main/{post['image_local']}"
+log(f"Image URL: {public_url}")
 
 # Get Page Access Token
 r = requests.get(f"https://graph.facebook.com/v21.0/{FB_PAGE_ID}",
@@ -70,17 +57,6 @@ PAGE_TOKEN = r.json().get('access_token')
 if not PAGE_TOKEN:
     log(f"FAILED: No page token: {r.json()}")
     sys.exit(1)
-
-# Upload to Catbox
-with open(out, 'rb') as f:
-    r = requests.post('https://catbox.moe/user/api.php',
-                      files={'fileToUpload':('post.jpg', f, 'image/jpeg')},
-                      data={'reqtype':'fileupload'}, timeout=60)
-    public_url = r.text.strip()
-    if not public_url.startswith('http'):
-        log(f"FAILED: Catbox: {r.text[:200]}")
-        sys.exit(1)
-log(f"Image hosted: {public_url}")
 
 # Create IG container
 r = requests.post(f"https://graph.facebook.com/v21.0/{IG_USER_ID}/media",
