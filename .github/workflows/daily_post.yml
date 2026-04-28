@@ -2,13 +2,13 @@ name: Daily Linpro Post Publisher
 
 on:
   schedule:
-    # 22:00 Israel = 19:00 UTC (DST, Apr-Oct) | 20:00 UTC (winter) — both included; Python checks IL time
-    - cron: '0 19 * * *'
-    - cron: '0 20 * * *'
-  workflow_dispatch: {}  # allow manual trigger
+    # Run every hour. Script handles idempotency via published_log.json.
+    # GitHub Actions free tier can delay scheduled jobs by hours — hourly cron + idempotency = robust.
+    - cron: '0 * * * *'
+  workflow_dispatch: {}
 
 permissions:
-  contents: write  # to commit published_log.json back
+  contents: write
 
 jobs:
   publish:
@@ -16,40 +16,25 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Check Israel local time is 22:xx
-        id: timecheck
-        run: |
-          IL_HOUR=$(TZ='Asia/Jerusalem' date +%H)
-          echo "Israel hour: $IL_HOUR"
-          if [ "$IL_HOUR" != "22" ]; then
-            echo "Not 22:00 IL — skipping"
-            echo "skip=true" >> $GITHUB_OUTPUT
-          else
-            echo "skip=false" >> $GITHUB_OUTPUT
-          fi
-
       - name: Set up Python
-        if: steps.timecheck.outputs.skip == 'false'
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
 
       - name: Install dependencies
-        if: steps.timecheck.outputs.skip == 'false'
         run: pip install requests pillow
 
       - name: Run publisher
-        if: steps.timecheck.outputs.skip == 'false'
         env:
           META_ACCESS_TOKEN: ${{ secrets.META_ACCESS_TOKEN }}
         run: python scripts/daily_post_publisher.py
 
       - name: Commit published log
-        if: steps.timecheck.outputs.skip == 'false'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           if [ -n "$(git status --porcelain published_log.json)" ]; then
+            git pull --rebase origin main || true
             git add published_log.json
             git commit -m "Log: published post on $(TZ='Asia/Jerusalem' date +%Y-%m-%d)"
             git push

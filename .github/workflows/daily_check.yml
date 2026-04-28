@@ -2,10 +2,14 @@ name: Daily Post Verification
 
 on:
   schedule:
-    # 23:30 Israel = 20:30 UTC (DST) | 21:30 UTC (winter) — both included; script-side guard
-    - cron: '30 20 * * *'
-    - cron: '30 21 * * *'
+    # Run every hour from 23:00 IL onward. Script sends email only once per day.
+    # 20:00 UTC = 23:00 IL DST | 21:00 UTC = 23:00 IL winter — covered by hourly schedule below
+    - cron: '0 20-23 * * *'
+    - cron: '0 0-3 * * *'
   workflow_dispatch: {}
+
+permissions:
+  contents: write
 
 jobs:
   check:
@@ -13,31 +17,28 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Check Israel local time is 23:xx
-        id: timecheck
-        run: |
-          IL_HOUR=$(TZ='Asia/Jerusalem' date +%H)
-          echo "Israel hour: $IL_HOUR"
-          if [ "$IL_HOUR" != "23" ]; then
-            echo "skip=true" >> $GITHUB_OUTPUT
-          else
-            echo "skip=false" >> $GITHUB_OUTPUT
-          fi
-
       - name: Set up Python
-        if: steps.timecheck.outputs.skip == 'false'
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
 
       - name: Install dependencies
-        if: steps.timecheck.outputs.skip == 'false'
         run: pip install requests
 
       - name: Run checker
-        if: steps.timecheck.outputs.skip == 'false'
         env:
           META_ACCESS_TOKEN: ${{ secrets.META_ACCESS_TOKEN }}
           GMAIL_USER: ${{ secrets.GMAIL_USER }}
           GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
         run: python scripts/daily_post_checker.py
+
+      - name: Commit check log
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          if [ -n "$(git status --porcelain check_log.json)" ]; then
+            git pull --rebase origin main || true
+            git add check_log.json
+            git commit -m "Log: daily check sent $(TZ='Asia/Jerusalem' date +%Y-%m-%d)"
+            git push
+          fi

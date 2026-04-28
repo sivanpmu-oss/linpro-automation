@@ -1,16 +1,36 @@
 """
-Daily Post Checker — runs daily 23:30 Israel via GitHub Actions.
-Verifies today's posts went up on both IG accounts and emails Sivan.
+Daily Post Checker — runs hourly from 23:00 IL via GitHub Actions.
+Verifies today's posts went up on both IG accounts and emails Sivan ONCE per day.
 """
-import os, sys, smtplib, ssl, requests
+import os, sys, json, smtplib, ssl, requests
+from pathlib import Path
 from email.message import EmailMessage
 from datetime import datetime
 from zoneinfo import ZoneInfo
+
+REPO_ROOT = Path(__file__).resolve().parent.parent
+CHECK_LOG = REPO_ROOT / "check_log.json"
 
 TOKEN = os.environ['META_ACCESS_TOKEN']
 GMAIL_USER = os.environ['GMAIL_USER']
 GMAIL_APP_PASSWORD = os.environ['GMAIL_APP_PASSWORD']
 TZ = ZoneInfo("Asia/Jerusalem")
+
+# Idempotency — only send once per day
+today_il = datetime.now(TZ).strftime('%Y-%m-%d')
+il_hour = int(datetime.now(TZ).strftime('%H'))
+
+# Skip if before 23:00 IL (we want late-day report)
+if il_hour < 23 and il_hour > 5:
+    print(f"IL hour {il_hour} — skipping, will run later", flush=True)
+    sys.exit(0)
+
+sent_log = []
+if CHECK_LOG.exists():
+    sent_log = json.loads(CHECK_LOG.read_text(encoding='utf-8'))
+if any(e.get('date') == today_il for e in sent_log):
+    print(f"Email already sent today ({today_il}) — skipping", flush=True)
+    sys.exit(0)
 
 ACCOUNTS = {
     "@sivan_linor (Hebrew)": "17841404776930021",
@@ -63,9 +83,13 @@ msg['To'] = GMAIL_USER
 msg['Subject'] = subject
 msg.set_content(body)
 
-with smtplib.SMTP_SSL("smtp.gmail.com", 465, context=ssl.create_default_context()) as server:
+with smtplib.SMTP_SSL("smtp.gmail.com", 465, context=ssl.create_default_context(), local_hostname="localhost") as server:
     server.login(GMAIL_USER, GMAIL_APP_PASSWORD)
     server.send_message(msg)
 
 print(f"Email sent: {subject}", flush=True)
 print(body, flush=True)
+
+# Record send to prevent re-send same day
+sent_log.append({"date": today_il, "subject": subject, "sent_at": datetime.now(TZ).isoformat()})
+CHECK_LOG.write_text(json.dumps(sent_log, indent=2, ensure_ascii=False), encoding='utf-8')
