@@ -1,0 +1,46 @@
+name: Morning Briefing
+on:
+  schedule:
+    # 07:00 IL = 04:00 UTC summer DST. Quad-cron for reliability.
+    - cron: '0,15,30,45 4 * * *'
+  workflow_dispatch: {}
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.12' }
+      - run: pip install requests
+      - name: Send briefing (only at 07:00 IL — first run wins, others skip via flag file)
+        env:
+          GMAIL_USER: ${{ secrets.GMAIL_USER }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+        run: |
+          # Idempotency — only first successful run of the day actually sends
+          TODAY=$(TZ='Asia/Jerusalem' date +%Y-%m-%d)
+          FLAG="briefing_log.json"
+          if [ -f "$FLAG" ] && grep -q "\"date\": \"$TODAY\"" "$FLAG"; then
+            echo "Already sent briefing for $TODAY — skipping"
+            exit 0
+          fi
+          python scripts/morning_briefing.py
+          # Record it
+          if [ -f "$FLAG" ]; then
+            python -c "import json; d=json.load(open('$FLAG'));d.append({'date':'$TODAY'});open('$FLAG','w').write(json.dumps(d[-30:],indent=2))"
+          else
+            echo "[{\"date\":\"$TODAY\"}]" > "$FLAG"
+          fi
+      - name: Commit briefing log
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          if [ -n "$(git status --porcelain briefing_log.json)" ]; then
+            git pull --rebase origin main || true
+            git add briefing_log.json
+            git commit -m "Morning briefing sent $(TZ='Asia/Jerusalem' date +%Y-%m-%d)"
+            git push
+          fi
+    permissions:
+      contents: write
