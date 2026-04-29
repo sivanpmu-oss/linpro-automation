@@ -2,9 +2,11 @@ name: Daily Linpro Post Publisher
 
 on:
   schedule:
-    # Run every hour. Script handles idempotency via published_log.json.
-    # GitHub Actions free tier can delay scheduled jobs by hours — hourly cron + idempotency = robust.
-    - cron: '0 * * * *'
+    # Quad cron — 4 firings per hour during publish window for reliability.
+    # Idempotency via published_log.json prevents duplicate posts.
+    # Publish window: 22:00 IL (19:00 UTC summer / 20:00 UTC winter) → 06:00 IL recovery.
+    - cron: '0,15,30,45 19-23 * * *'    # 22:00–02:59 IL summer / 21:00–01:59 IL winter
+    - cron: '0,15,30,45 0-4 * * *'      # 03:00–07:59 IL summer (recovery window)
   workflow_dispatch: {}
 
 permissions:
@@ -36,6 +38,6 @@ jobs:
           if [ -n "$(git status --porcelain published_log.json)" ]; then
             git pull --rebase origin main || true
             git add published_log.json
-            git commit -m "Log: published post on $(TZ='Asia/Jerusalem' date +%Y-%m-%d)"
+            git commit -m "Daily post published $(TZ='Asia/Jerusalem' date +%Y-%m-%d)"
             git push
           fi
