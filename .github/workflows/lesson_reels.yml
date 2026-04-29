@@ -2,11 +2,9 @@ name: Lesson Reels Publisher
 
 on:
   schedule:
-    # Quad cron every 15 min during the publish window — defends against GH Actions free-tier delays.
-    # Idempotency in the script prevents duplicate posts.
-    # Window: scheduled time 20:30 IL (17:30 UTC summer / 18:30 UTC winter) → 07:00 IL recovery.
-    - cron: '0,15,30,45 17-23 * * *'    # 20:30 IL onward through midnight UTC
-    - cron: '0,15,30,45 0-4 * * *'      # 03:00–07:59 IL recovery window
+    # Target: 13:30 IL = 10:30 UTC (summer DST). Quad-cron 4x per hour for reliability.
+    # Active window 10:00–17:00 UTC = 13:00–20:00 IL.
+    - cron: '0,15,30,45 10-16 * * *'
   workflow_dispatch: {}
 
 permissions:
