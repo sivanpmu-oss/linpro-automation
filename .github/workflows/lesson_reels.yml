@@ -1,0 +1,43 @@
+name: Lesson Reels Publisher
+
+on:
+  schedule:
+    # Quad cron every 15 min during the publish window — defends against GH Actions free-tier delays.
+    # Idempotency in the script prevents duplicate posts.
+    # Window: scheduled time 20:30 IL (17:30 UTC summer / 18:30 UTC winter) → 07:00 IL recovery.
+    - cron: '0,15,30,45 17-23 * * *'    # 20:30 IL onward through midnight UTC
+    - cron: '0,15,30,45 0-4 * * *'      # 03:00–07:59 IL recovery window
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: pip install requests
+
+      - name: Run publisher
+        env:
+          META_ACCESS_TOKEN: ${{ secrets.META_ACCESS_TOKEN }}
+        run: python scripts/lesson_reels_publisher.py
+
+      - name: Commit published log
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          if [ -n "$(git status --porcelain lessons_published_log.json)" ]; then
+            git pull --rebase origin main || true
+            git add lessons_published_log.json
+            git commit -m "Lesson reel published $(TZ='Asia/Jerusalem' date +%Y-%m-%d)"
+            git push
+          fi
