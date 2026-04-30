@@ -1,5 +1,11 @@
 name: Rav-Messer Auth Test
-on: { workflow_dispatch: {} }
+on:
+  workflow_dispatch:
+    inputs:
+      expected_sha8:
+        description: 'Expected SHA8 of client_secret (for verification)'
+        required: false
+        default: ''
 jobs:
   run:
     runs-on: ubuntu-latest
@@ -14,3 +20,4 @@ jobs:
           RAV_CLIENT_SECRET: ${{ secrets.RAV_CLIENT_SECRET }}
           RAV_CLIENT_NAME: ${{ secrets.RAV_CLIENT_NAME }}
           RAV_USER_TOKEN: ${{ secrets.RAV_USER_TOKEN }}
+          EXPECTED_SECRET_SHA8: ${{ inputs.expected_sha8 }}
