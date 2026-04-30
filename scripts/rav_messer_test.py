@@ -1,79 +1,107 @@
-"""Diagnostic test for Rav-Messer (Responder) API auth."""
+"""Diagnostic test for Rav-Messer (Responder) API V2.0 — OAuth Bearer flow."""
 import hashlib
+import json
 import os
-import time
-import uuid
 import requests
 
 
-def fp(s: str) -> str:
-    """Hash-based fingerprint — won't be masked by GitHub Actions."""
+def fp(s):
     if not s:
         return "<empty>"
-    h = hashlib.sha256(s.encode()).hexdigest()[:8]
-    return f"sha256:{h} chars-count:{len(s):03d}"
-
-
-def auth_header(c_id, c_secret, u_key, u_token):
-    nonce = str(uuid.uuid4())
-    ts = str(int(time.time()))
-    c_md5 = hashlib.md5((c_secret + nonce).encode()).hexdigest()
-    u_md5 = hashlib.md5((u_token + nonce).encode()).hexdigest()
-    return (f"c_key={c_id},c_secret={c_md5},"
-            f"u_key={u_key},u_secret={u_md5},"
-            f"nonce={nonce},timestamp={ts}")
+    return f"sha256:{hashlib.sha256(s.encode()).hexdigest()[:8]} chars-count:{len(s):03d}"
 
 
 def main():
     c_id = os.environ.get("RAV_CLIENT_ID", "")
     c_secret = os.environ.get("RAV_CLIENT_SECRET", "")
-    u_key = os.environ.get("RAV_CLIENT_NAME", "")
     u_token = os.environ.get("RAV_USER_TOKEN", "")
+    # RAV_CLIENT_NAME is the connection identifier — not used in V2 OAuth flow
 
-    print("=== Rav-Messer auth test ===")
+    print("=== Rav-Messer V2 OAuth test ===")
     print(f"RAV_CLIENT_ID:     {fp(c_id)}")
     print(f"RAV_CLIENT_SECRET: {fp(c_secret)}")
-    print(f"RAV_CLIENT_NAME:   {fp(u_key)}")
     print(f"RAV_USER_TOKEN:    {fp(u_token)}")
 
-    expected = os.environ.get("EXPECTED_SECRET_SHA8", "")
-    if expected:
-        actual = hashlib.sha256(c_secret.encode()).hexdigest()[:8]
-        print(f"expected_sha8: {expected}  actual_sha8: {actual}  match: {expected == actual}")
-
-    if not all([c_id, c_secret, u_key, u_token]):
+    if not all([c_id, c_secret, u_token]):
         print("ERROR: missing one or more secrets")
         return 2
 
-    base = "https://api.responder.co.il/main"
-    endpoints = ["/lists", "/Messages", "/PersonalFields"]
+    base = "https://graph.responder.live/v2"
 
-    overall_ok = False
-    for ep in endpoints:
+    payload = {
+        "grant_type": "client_credentials",
+        "scope": "*",
+        "client_id": int(c_id),
+        "client_secret": c_secret,
+        "user_token": u_token,
+    }
+
+    print(f"\n--- POST {base}/oauth/token (JSON body) ---")
+    try:
+        r = requests.post(
+            f"{base}/oauth/token",
+            json=payload,
+            headers={"Accept": "application/json"},
+            timeout=20,
+        )
+    except requests.RequestException as e:
+        print(f"network error: {e}")
+        return 1
+    print(f"status: {r.status_code}")
+    body = r.text
+    if len(body) > 2000:
+        body = body[:2000] + "...[truncated]"
+    print(f"body: {body!r}")
+
+    if r.status_code != 200:
+        # Try form-encoded as fallback
+        print(f"\n--- POST {base}/oauth/token (form-encoded body) ---")
+        r2 = requests.post(
+            f"{base}/oauth/token",
+            data=payload,
+            headers={"Accept": "application/json"},
+            timeout=20,
+        )
+        print(f"status: {r2.status_code}")
+        body2 = r2.text
+        if len(body2) > 2000:
+            body2 = body2[:2000] + "...[truncated]"
+        print(f"body: {body2!r}")
+        if r2.status_code == 200:
+            r = r2
+
+    if r.status_code != 200:
+        print("\n=== AUTH FAILED ===")
+        return 1
+
+    data = r.json()
+    access_token = data.get("token")
+    if not access_token:
+        print("ERROR: no 'token' field in response")
+        print(f"response keys: {list(data.keys())}")
+        return 1
+
+    print(f"\n✅ Got access_token (length={len(access_token)}, sha8={hashlib.sha256(access_token.encode()).hexdigest()[:8]})")
+    print(f"account info — name: {data.get('name')}, username: {data.get('username')}")
+
+    # Try /me and /lists with Bearer token
+    bearer_headers = {"Authorization": f"Bearer {access_token}", "Accept": "application/json"}
+    for ep in ["/me", "/lists"]:
         url = base + ep
-        header = auth_header(c_id, c_secret, u_key, u_token)
         print(f"\n--- GET {url} ---")
         try:
-            r = requests.get(
-                url,
-                headers={"Authorization": header, "Accept": "application/json"},
-                timeout=20,
-            )
+            r = requests.get(url, headers=bearer_headers, timeout=20)
         except requests.RequestException as e:
             print(f"network error: {e}")
             continue
         print(f"status: {r.status_code}")
         body = r.text
-        if len(body) > 1500:
-            body = body[:1500] + "...[truncated]"
-        print(f"body-len: {len(r.text)}")
+        if len(body) > 800:
+            body = body[:800] + "...[truncated]"
         print(f"body: {body!r}")
-        if r.status_code == 200:
-            overall_ok = True
 
-    print("\n=== result ===")
-    print("AUTH OK" if overall_ok else "AUTH FAILED on all endpoints")
-    return 0 if overall_ok else 1
+    print("\n=== AUTH OK ===")
+    return 0
 
 
 if __name__ == "__main__":
