@@ -1,71 +1,65 @@
-"""Diagnostic test for Rav-Messer (Responder) API V2.0 — OAuth Bearer flow."""
+"""Count subscribers per Rav-Messer list."""
 import hashlib
-import json
 import os
 import requests
 
 
-def fp(s):
-    if not s:
-        return "<empty>"
-    return f"sha256:{hashlib.sha256(s.encode()).hexdigest()[:8]} chars-count:{len(s):03d}"
-
-
 def main():
-    c_id = os.environ.get("RAV_CLIENT_ID", "")
-    c_secret = os.environ.get("RAV_CLIENT_SECRET", "")
-    u_token = os.environ.get("RAV_USER_TOKEN", "")
-
-    print("=== Rav-Messer V2 OAuth test ===")
-    print(f"RAV_CLIENT_ID:     {fp(c_id)}")
-    print(f"RAV_CLIENT_SECRET: {fp(c_secret)}")
-    print(f"RAV_USER_TOKEN:    {fp(u_token)}")
-
-    if not all([c_id, c_secret, u_token]):
-        print("ERROR: missing one or more secrets")
-        return 2
-
+    c_id = os.environ["RAV_CLIENT_ID"]
+    c_secret = os.environ["RAV_CLIENT_SECRET"]
+    u_token = os.environ["RAV_USER_TOKEN"]
     base = "https://graph.responder.live/v2"
-    payload = {
-        "grant_type": "client_credentials",
-        "scope": "*",
-        "client_id": int(c_id),
-        "client_secret": c_secret,
-        "user_token": u_token,
-    }
 
-    print(f"\n--- POST {base}/oauth/token ---")
-    r = requests.post(f"{base}/oauth/token", json=payload, timeout=20)
-    print(f"status: {r.status_code}")
-    if r.status_code != 200:
-        print(f"body: {r.text!r}")
-        print("=== AUTH FAILED ===")
-        return 1
+    r = requests.post(f"{base}/oauth/token", json={
+        "grant_type": "client_credentials", "scope": "*",
+        "client_id": int(c_id), "client_secret": c_secret, "user_token": u_token,
+    }, timeout=20)
+    r.raise_for_status()
+    token = r.json()["token"]
+    bearer = {"Authorization": f"Bearer {token}", "Accept": "application/json"}
 
-    data = r.json()
-    access_token = data.get("token")
-    print(f"✅ Got access_token sha8={hashlib.sha256(access_token.encode()).hexdigest()[:8]} expires_at_epoch={data.get('expire')}")
+    lists = requests.get(f"{base}/lists", headers=bearer, timeout=20).json().get("data", [])
+    print(f"\n=== Subscriber counts ({len(lists)} lists) ===\n")
 
-    bearer = {"Authorization": f"Bearer {access_token}", "Accept": "application/json"}
+    rows = []
+    for L in lists:
+        lid = L["id"]
+        name = L["name"]
+        # First call to discover pagination metadata
+        r = requests.get(f"{base}/lists/{lid}/subscribers", headers=bearer, timeout=20)
+        if r.status_code != 200:
+            rows.append((lid, name, f"ERROR {r.status_code}: {r.text[:100]}"))
+            continue
+        body = r.json()
+        # Look for total count fields commonly present
+        candidates = ['total', 'count', 'total_count', 'totalRecords', 'totalCount', 'subscribers_count']
+        total = None
+        for k in candidates:
+            if k in body:
+                total = body[k]
+                break
+        # Also check pagination object
+        if total is None and 'pagination' in body:
+            for k in ['total', 'total_count', 'count', 'records']:
+                if k in body['pagination']:
+                    total = body['pagination'][k]
+                    break
+        # Else count items in data
+        data_len = len(body.get('data', []))
+        rows.append((lid, name, total, data_len, list(body.keys())))
 
-    print(f"\n--- GET {base}/lists (full output) ---")
-    r = requests.get(f"{base}/lists", headers=bearer, timeout=20)
-    print(f"status: {r.status_code}")
-    if r.status_code == 200:
-        lists = r.json().get("data", [])
-        print(f"\nרשימות זמינות ({len(lists)}):")
-        for L in lists:
-            print(f"  ID {L.get('id')} — {L.get('name')!r}  (created {L.get('created')})")
-    else:
-        print(f"body: {r.text!r}")
+    print(f"{'ID':<8} {'Total':<8} {'Page':<6} {'Name'}")
+    for r in rows:
+        if len(r) == 3:
+            print(f"{r[0]:<8} {r[2]}")
+        else:
+            lid, name, total, data_len, keys = r
+            t = total if total is not None else "?"
+            print(f"{lid:<8} {str(t):<8} {data_len:<6} {name}")
 
-    print(f"\n--- GET {base}/tag (account-level tags) ---")
-    r = requests.get(f"{base}/tag", headers=bearer, timeout=20)
-    print(f"status: {r.status_code}")
-    if r.status_code == 200:
-        print(f"body: {r.text[:1000]!r}")
-
-    print("\n=== AUTH OK ===")
+    # Also print full top-level keys of one response so we can see structure
+    if rows:
+        print(f"\nResponse top-level keys for first list: {rows[0][4] if len(rows[0]) > 4 else 'N/A'}")
     return 0
 
 
