@@ -2,11 +2,8 @@ name: Daily Linpro Post Publisher
 
 on:
   schedule:
-    # Quad cron — 4 firings per hour during publish window for reliability.
-    # Idempotency via published_log.json prevents duplicate posts.
-    # Publish window: 22:00 IL (19:00 UTC summer / 20:00 UTC winter) → 06:00 IL recovery.
-    - cron: '0,15,30,45 19-23 * * *'    # 22:00–02:59 IL summer / 21:00–01:59 IL winter
-    - cron: '0,15,30,45 0-4 * * *'      # 03:00–07:59 IL summer (recovery window)
+    - cron: '0,15,30,45 19-23 * * *'
+    - cron: '0,15,30,45 0-4 * * *'
   workflow_dispatch: {}
 
 permissions:
@@ -29,6 +26,8 @@ jobs:
       - name: Run publisher
         env:
           META_ACCESS_TOKEN: ${{ secrets.META_ACCESS_TOKEN }}
+          GMAIL_USER: ${{ secrets.GMAIL_USER }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
         run: python scripts/daily_post_publisher.py
 
       - name: Commit published log
