@@ -2,8 +2,7 @@ name: Lesson Reels Publisher
 
 on:
   schedule:
-    # Target: 13:30 IL = 10:30 UTC (summer DST). Quad-cron 4x per hour for reliability.
-    # Active window 10:00–17:00 UTC = 13:00–20:00 IL.
+    # Active window 10:00–17:00 UTC = 13:00–20:00 IL. Quad-cron for reliability.
     - cron: '0,15,30,45 10-16 * * *'
   workflow_dispatch: {}
 
@@ -30,12 +29,13 @@ jobs:
         run: python scripts/lesson_reels_publisher.py
 
       - name: Commit published log
+        if: always()
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           if [ -n "$(git status --porcelain lessons_published_log.json)" ]; then
             git pull --rebase origin main || true
             git add lessons_published_log.json
-            git commit -m "Lesson reel published $(TZ='Asia/Jerusalem' date +%Y-%m-%d)"
+            git commit -m "Lesson reel log updated $(TZ='Asia/Jerusalem' date +%Y-%m-%d)"
             git push
           fi
