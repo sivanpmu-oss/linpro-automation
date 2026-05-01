@@ -19,5 +19,13 @@
     "skip_reason": "duplicate of live post 18339393706168422 from 2026-04-26 (Sivan deleted the auto-published version on 2026-05-01)",
     "deleted_auto_ig_id": "18174683836398576",
     "blocked_at": "2026-05-01 09:50:00"
+  },
+  {
+    "post_num": 4,
+    "publish_date": "2026-05-01",
+    "ig_post_id": "17960611250940635",
+    "fb_post_id": null,
+    "published_at": "2026-05-02 00:40:08",
+    "fb_skip_reason": "missing pages_manage_posts (code 200)"
   }
 ]
