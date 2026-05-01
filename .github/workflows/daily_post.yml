@@ -32,12 +32,13 @@ jobs:
         run: python scripts/daily_post_publisher.py
 
       - name: Commit published log
+        if: always()
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           if [ -n "$(git status --porcelain published_log.json)" ]; then
             git pull --rebase origin main || true
             git add published_log.json
-            git commit -m "Daily post published $(TZ='Asia/Jerusalem' date +%Y-%m-%d)"
+            git commit -m "Daily post log updated $(TZ='Asia/Jerusalem' date +%Y-%m-%d)"
             git push
           fi
