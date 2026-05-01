@@ -1,8 +1,11 @@
 """
-Daily post publisher — publishes to BOTH:
-  • Instagram @linpro.code
-  • Facebook page "LIN PRO"
-Runs from GitHub Actions, idempotent.
+Daily post publisher — publishes to:
+  • Instagram @linpro.code (PRIMARY — required for success)
+  • Facebook page "LIN PRO" (BEST-EFFORT — skipped if permissions missing)
+
+Runs from GitHub Actions, idempotent via published_log.json.
+Exits 0 if IG succeeds, even if FB is skipped/fails (IG is the priority channel).
+Exits 1 only if IG fails — that's a real problem worth alerting on.
 """
 import json, os, sys, time, requests
 from pathlib import Path
@@ -19,6 +22,10 @@ GITHUB_REPO = "sivanpmu-oss/linpro-automation"
 TOKEN = os.environ['META_ACCESS_TOKEN']
 TZ = ZoneInfo("Asia/Jerusalem")
 
+# Permission errors that mean "FB will never work until Sivan re-auths"
+FB_PERMANENT_ERROR_CODES = (100, 200)
+FB_PERMANENT_ERROR_MARKERS = ("pages_manage_posts", "No permission to publish")
+
 
 def log(msg):
     ts = datetime.now(TZ).strftime('%Y-%m-%d %H:%M:%S')
@@ -26,7 +33,6 @@ def log(msg):
 
 
 def get_page_token(page_id, user_token):
-    """Page tokens are obtained via /me/accounts (returns all pages with their tokens)."""
     r = requests.get(
         "https://graph.facebook.com/v21.0/me/accounts",
         params={"fields": "id,access_token", "access_token": user_token, "limit": 100},
@@ -61,16 +67,24 @@ def publish_to_instagram(public_url, caption, page_token):
 
 
 def publish_to_facebook(public_url, caption, page_token):
-    """Post a photo to the FB page using URL upload."""
+    """Returns (post_id, skip_reason). post_id is None on failure.
+    skip_reason is set to a permanent marker if the failure is a permission issue
+    that won't fix itself on retry — caller should stop trying for that post.
+    """
     r = requests.post(
         f"https://graph.facebook.com/v21.0/{FB_PAGE_ID}/photos",
         data={"url": public_url, "caption": caption, "access_token": page_token},
         timeout=60,
     ).json()
     if "id" in r:
-        return r["id"]
+        return r["id"], None
+    err = r.get("error", {})
+    code = err.get("code")
+    msg = err.get("message", "")
     log(f"  FB publish FAILED: {r}")
-    return None
+    if code in FB_PERMANENT_ERROR_CODES and any(m in msg for m in FB_PERMANENT_ERROR_MARKERS):
+        return None, f"missing pages_manage_posts (code {code})"
+    return None, None
 
 
 # === MAIN ===
@@ -101,9 +115,12 @@ published = []
 if PUBLISHED_FILE.exists():
     published = json.loads(PUBLISHED_FILE.read_text(encoding='utf-8'))
 existing = next((e for e in published if e['post_num'] == post['post_num']), None)
-if existing and existing.get("ig_post_id") and existing.get("fb_post_id"):
-    log(f"Post #{post['post_num']} already published to both — exiting")
-    sys.exit(0)
+
+# Already done if IG was published — FB is best-effort and may be permanently skipped
+if existing and existing.get("ig_post_id"):
+    if existing.get("fb_post_id") or existing.get("fb_skip_reason"):
+        log(f"Post #{post['post_num']} already complete (IG done, FB done or skipped) — exiting")
+        sys.exit(0)
 
 img_local = REPO_ROOT / post['image_local']
 if not img_local.exists():
@@ -117,6 +134,7 @@ page_token = get_page_token(FB_PAGE_ID, TOKEN)
 
 ig_id = (existing or {}).get("ig_post_id")
 fb_id = (existing or {}).get("fb_post_id")
+fb_skip_reason = (existing or {}).get("fb_skip_reason")
 
 if not ig_id:
     log(">>> Instagram")
@@ -124,11 +142,13 @@ if not ig_id:
     if ig_id:
         log(f"  IG PUBLISHED: {ig_id}")
 
-if not fb_id:
+if not fb_id and not fb_skip_reason:
     log(">>> Facebook")
-    fb_id = publish_to_facebook(public_url, post["caption"], page_token)
+    fb_id, fb_skip_reason = publish_to_facebook(public_url, post["caption"], page_token)
     if fb_id:
         log(f"  FB PUBLISHED: {fb_id}")
+    elif fb_skip_reason:
+        log(f"  FB SKIPPED PERMANENTLY: {fb_skip_reason}")
 
 new_entry = {
     "post_num": post['post_num'],
@@ -137,6 +157,8 @@ new_entry = {
     "fb_post_id": fb_id,
     "published_at": datetime.now(TZ).strftime('%Y-%m-%d %H:%M:%S'),
 }
+if fb_skip_reason:
+    new_entry["fb_skip_reason"] = fb_skip_reason
 if existing:
     published = [new_entry if e['post_num'] == post['post_num'] else e for e in published]
 else:
@@ -144,6 +166,15 @@ else:
 PUBLISHED_FILE.write_text(json.dumps(published, indent=2, ensure_ascii=False), encoding='utf-8')
 log("Logged to published_log.json")
 
-if not ig_id or not fb_id:
-    log("PARTIAL FAILURE — will retry on next run")
+# IG is the success criterion. FB is best-effort.
+if not ig_id:
+    log("FAILURE — Instagram did not publish. This is a real failure.")
     sys.exit(1)
+
+if not fb_id and not fb_skip_reason:
+    # Transient FB failure (not permission). Retry on next run.
+    log("PARTIAL — IG ok, FB transient failure (will retry next run)")
+    sys.exit(0)  # IG succeeded — don't email failure
+
+log("SUCCESS — IG published" + (" + FB published" if fb_id else " (FB skipped)"))
+sys.exit(0)
