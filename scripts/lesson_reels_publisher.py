@@ -1,11 +1,11 @@
 """
-Lesson Reels Publisher — publishes the 8 PMU course teaser reels to:
-  • Instagram @sivan_linor
-  • Facebook page "Sivan Linor beauty academy"
-Both happen automatically, in sync.
+Lesson Reels Publisher — publishes 8 PMU course teaser reels to:
+  • Instagram @sivan_linor (PRIMARY — required for success)
+  • Facebook page "Sivan Linor beauty academy" (BEST-EFFORT — skipped if missing perms)
 
 Schedule: every 3 days at 13:30 IL (peak follower activity).
 Idempotent — safe to run hourly.
+Exits 0 if IG succeeds, even if FB is skipped.
 """
 import json, os, sys, time, requests
 from pathlib import Path
@@ -21,6 +21,9 @@ IG_USER_ID = "17841404776930021"   # @sivan_linor
 FB_PAGE_ID = "112225864303013"     # Sivan Linor beauty academy
 TOKEN = os.environ["META_ACCESS_TOKEN"]
 TZ = ZoneInfo("Asia/Jerusalem")
+
+FB_PERMANENT_ERROR_CODES = (100, 200)
+FB_PERMANENT_ERROR_MARKERS = ("pages_manage_posts", "No permission to publish")
 
 
 def log(msg):
@@ -80,20 +83,25 @@ def publish_to_instagram(video_url, caption):
 
 
 def publish_to_facebook(video_url, caption):
-    page_token = get_page_token(FB_PAGE_ID, TOKEN)
+    """Returns (post_id, skip_reason). skip_reason is set if a permanent permission error."""
+    try:
+        page_token = get_page_token(FB_PAGE_ID, TOKEN)
+    except RuntimeError as e:
+        return None, f"page token unavailable: {e}"
     resp = requests.post(
         f"https://graph.facebook.com/v21.0/{FB_PAGE_ID}/videos",
-        data={
-            "file_url": video_url,
-            "description": caption,
-            "access_token": page_token,
-        },
+        data={"file_url": video_url, "description": caption, "access_token": page_token},
         timeout=180,
     ).json()
     if "id" in resp:
-        return resp["id"]
-    log(f"FB publish FAILED: {resp}")
-    return None
+        return resp["id"], None
+    err = resp.get("error", {})
+    code = err.get("code")
+    msg = err.get("message", "")
+    log(f"  FB publish FAILED: {resp}")
+    if code in FB_PERMANENT_ERROR_CODES and any(m in msg for m in FB_PERMANENT_ERROR_MARKERS):
+        return None, f"missing pages_manage_posts (code {code})"
+    return None, None
 
 
 # === MAIN ===
@@ -117,15 +125,19 @@ published = []
 if PUBLISHED_FILE.exists():
     published = json.loads(PUBLISHED_FILE.read_text(encoding="utf-8"))
 existing = next((p for p in published if p["lesson_num"] == post["lesson_num"]), None)
-if existing and existing.get("ig_post_id") and existing.get("fb_post_id"):
-    log(f"Lesson {post['lesson_num']} already published to both — exiting")
-    sys.exit(0)
+
+# Already done if IG was published (FB is best-effort)
+if existing and existing.get("ig_post_id"):
+    if existing.get("fb_post_id") or existing.get("fb_skip_reason"):
+        log(f"Lesson {post['lesson_num']} already complete — exiting")
+        sys.exit(0)
 
 video_url = f"{RAW_BASE}/{post['video_file']}"
 log(f"Publishing lesson {post['lesson_num']} — {video_url}")
 
 ig_id = (existing or {}).get("ig_post_id")
 fb_id = (existing or {}).get("fb_post_id")
+fb_skip_reason = (existing or {}).get("fb_skip_reason")
 
 if not ig_id:
     log(">>> Instagram")
@@ -133,13 +145,14 @@ if not ig_id:
     if ig_id:
         log(f"  IG PUBLISHED: {ig_id}")
 
-if not fb_id:
+if not fb_id and not fb_skip_reason:
     log(">>> Facebook")
-    fb_id = publish_to_facebook(video_url, post["caption"])
+    fb_id, fb_skip_reason = publish_to_facebook(video_url, post["caption"])
     if fb_id:
         log(f"  FB PUBLISHED: {fb_id}")
+    elif fb_skip_reason:
+        log(f"  FB SKIPPED PERMANENTLY: {fb_skip_reason}")
 
-# Update log
 new_entry = {
     "lesson_num": post["lesson_num"],
     "publish_date": post["publish_date"],
@@ -147,6 +160,9 @@ new_entry = {
     "fb_post_id": fb_id,
     "published_at": datetime.now(TZ).strftime("%Y-%m-%d %H:%M:%S"),
 }
+if fb_skip_reason:
+    new_entry["fb_skip_reason"] = fb_skip_reason
+
 if existing:
     published = [new_entry if p["lesson_num"] == post["lesson_num"] else p for p in published]
 else:
@@ -156,6 +172,14 @@ PUBLISHED_FILE.write_text(
 )
 log("Logged to lessons_published_log.json")
 
-if not ig_id or not fb_id:
-    log("PARTIAL FAILURE — will retry on next run")
+# IG is success criterion
+if not ig_id:
+    log("FAILURE — Instagram did not publish")
     sys.exit(1)
+
+if not fb_id and not fb_skip_reason:
+    log("PARTIAL — IG ok, FB transient failure (will retry)")
+    sys.exit(0)
+
+log("SUCCESS — IG published" + (" + FB published" if fb_id else " (FB skipped)"))
+sys.exit(0)
