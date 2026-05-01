@@ -10,5 +10,13 @@
     "publish_date": "2026-04-29",
     "ig_post_id": "18061666466425439",
     "published_at": "2026-04-29 23:26:57"
+  },
+  {
+    "post_num": 3,
+    "publish_date": "2026-04-30",
+    "ig_post_id": "18174683836398576",
+    "fb_post_id": null,
+    "fb_skip_reason": "missing pages_manage_posts (recovered from lost log of run 25191868389)",
+    "published_at": "2026-05-01 01:12:02"
   }
 ]
