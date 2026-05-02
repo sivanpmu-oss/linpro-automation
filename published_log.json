@@ -27,5 +27,77 @@
     "fb_post_id": null,
     "published_at": "2026-05-02 00:40:08",
     "fb_skip_reason": "missing pages_manage_posts (code 200)"
+  },
+  {
+    "post_num": 7,
+    "publish_date": "2026-05-04",
+    "ig_post_id": null,
+    "fb_post_id": null,
+    "skip_reason": "Hebrew text on image (post_07.jpg) — preemptive block, needs English replacement",
+    "blocked_at": "2026-05-02 12:30:00 (preemptive)"
+  },
+  {
+    "post_num": 10,
+    "publish_date": "2026-05-07",
+    "ig_post_id": null,
+    "fb_post_id": null,
+    "skip_reason": "Hebrew text on image (post_10.jpg) — preemptive block, needs English replacement",
+    "blocked_at": "2026-05-02 12:30:00 (preemptive)"
+  },
+  {
+    "post_num": 13,
+    "publish_date": "2026-05-10",
+    "ig_post_id": null,
+    "fb_post_id": null,
+    "skip_reason": "Hebrew text on image (post_13.jpg) — preemptive block, needs English replacement",
+    "blocked_at": "2026-05-02 12:30:00 (preemptive)"
+  },
+  {
+    "post_num": 15,
+    "publish_date": "2026-05-12",
+    "ig_post_id": null,
+    "fb_post_id": null,
+    "skip_reason": "Hebrew text on image (post_15.jpg) — preemptive block, needs English replacement",
+    "blocked_at": "2026-05-02 12:30:00 (preemptive)"
+  },
+  {
+    "post_num": 17,
+    "publish_date": "2026-05-14",
+    "ig_post_id": null,
+    "fb_post_id": null,
+    "skip_reason": "Hebrew text on image (post_17.jpg) — preemptive block, needs English replacement",
+    "blocked_at": "2026-05-02 12:30:00 (preemptive)"
+  },
+  {
+    "post_num": 18,
+    "publish_date": "2026-05-15",
+    "ig_post_id": null,
+    "fb_post_id": null,
+    "skip_reason": "Hebrew text on image (post_18.jpg) — preemptive block, needs English replacement",
+    "blocked_at": "2026-05-02 12:30:00 (preemptive)"
+  },
+  {
+    "post_num": 20,
+    "publish_date": "2026-05-17",
+    "ig_post_id": null,
+    "fb_post_id": null,
+    "skip_reason": "Hebrew text on image (post_20.jpg) — preemptive block, needs English replacement",
+    "blocked_at": "2026-05-02 12:30:00 (preemptive)"
+  },
+  {
+    "post_num": 21,
+    "publish_date": "2026-05-18",
+    "ig_post_id": null,
+    "fb_post_id": null,
+    "skip_reason": "Hebrew text on image (post_21.jpg) — preemptive block, needs English replacement",
+    "blocked_at": "2026-05-02 12:30:00 (preemptive)"
+  },
+  {
+    "post_num": 22,
+    "publish_date": "2026-05-19",
+    "ig_post_id": null,
+    "fb_post_id": null,
+    "skip_reason": "Hebrew text on image (post_22.jpg) — preemptive block, needs English replacement",
+    "blocked_at": "2026-05-02 12:30:00 (preemptive)"
   }
 ]

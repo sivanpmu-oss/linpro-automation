@@ -1,0 +1,175 @@
+{
+  "post_01.jpg": {
+    "flagged": false,
+    "heb_words_found": [],
+    "heb_word_count": 0
+  },
+  "post_02.jpg": {
+    "flagged": true,
+    "heb_words_found": [
+      "תקור",
+      "השום",
+      "ההור"
+    ],
+    "heb_word_count": 3
+  },
+  "post_03.jpg": {
+    "flagged": false,
+    "heb_words_found": [],
+    "heb_word_count": 0
+  },
+  "post_04.jpg": {
+    "flagged": true,
+    "heb_words_found": [
+      "ועדיין",
+      "סיימתי",
+      "עבודה",
+      "שנה"
+    ],
+    "heb_word_count": 0,
+    "manual_flag": "Stylized cursive Hebrew — OCR misses, human-verified"
+  },
+  "post_05.jpg": {
+    "flagged": false,
+    "heb_words_found": [],
+    "heb_word_count": 0
+  },
+  "post_06.jpg": {
+    "flagged": false,
+    "heb_words_found": [],
+    "heb_word_count": 0
+  },
+  "post_07.jpg": {
+    "flagged": true,
+    "heb_words_found": [
+      "תורת",
+      "הצבעים",
+      "תורת"
+    ],
+    "heb_word_count": 3
+  },
+  "post_08.jpg": {
+    "flagged": false,
+    "heb_words_found": [],
+    "heb_word_count": 0
+  },
+  "post_09.jpg": {
+    "flagged": false,
+    "heb_words_found": [],
+    "heb_word_count": 0
+  },
+  "post_10.jpg": {
+    "flagged": true,
+    "heb_words_found": [
+      "להחליף",
+      "אותנו",
+      "להחליף",
+      "אותנו"
+    ],
+    "heb_word_count": 4
+  },
+  "post_11.jpg": {
+    "flagged": false,
+    "heb_words_found": [],
+    "heb_word_count": 0
+  },
+  "post_12.jpg": {
+    "flagged": false,
+    "heb_words_found": [],
+    "heb_word_count": 0
+  },
+  "post_13.jpg": {
+    "flagged": true,
+    "heb_words_found": [
+      "יותר",
+      "דווקא",
+      "שלקוחו",
+      "יעדיפו",
+      "לשלם"
+    ],
+    "heb_word_count": 7
+  },
+  "post_14.jpg": {
+    "flagged": false,
+    "heb_words_found": [],
+    "heb_word_count": 0
+  },
+  "post_15.jpg": {
+    "flagged": true,
+    "heb_words_found": [
+      "הקשק",
+      "לושש",
+      "יוּמי"
+    ],
+    "heb_word_count": 3
+  },
+  "post_16.jpg": {
+    "flagged": false,
+    "heb_words_found": [],
+    "heb_word_count": 0
+  },
+  "post_17.jpg": {
+    "flagged": true,
+    "heb_words_found": [
+      "מפספסת",
+      "שהעין",
+      "מפספסת"
+    ],
+    "heb_word_count": 3
+  },
+  "post_18.jpg": {
+    "flagged": true,
+    "heb_words_found": [
+      "הזבןהכי"
+    ],
+    "heb_word_count": 1
+  },
+  "post_19.jpg": {
+    "flagged": false,
+    "heb_words_found": [],
+    "heb_word_count": 0
+  },
+  "post_20.jpg": {
+    "flagged": true,
+    "heb_words_found": [
+      "השיו"
+    ],
+    "heb_word_count": 1
+  },
+  "post_21.jpg": {
+    "flagged": true,
+    "heb_words_found": [
+      "הקורס",
+      "אפליקציית",
+      "צריכה",
+      "שניהם",
+      "גללי"
+    ],
+    "heb_word_count": 12
+  },
+  "post_22.jpg": {
+    "flagged": true,
+    "heb_words_found": [
+      "האבחון",
+      "הזקצועי",
+      "האבחון",
+      "המקצועי"
+    ],
+    "heb_word_count": 4
+  },
+  "post_23.jpg": {
+    "flagged": false,
+    "heb_words_found": [],
+    "heb_word_count": 0
+  },
+  "post_24.jpg": {
+    "flagged": false,
+    "heb_words_found": [],
+    "heb_word_count": 0
+  },
+  "post_25.jpg": {
+    "flagged": false,
+    "heb_words_found": [],
+    "heb_word_count": 0
+  }
+}

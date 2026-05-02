@@ -183,6 +183,61 @@ if not img_local.exists():
 public_url = f"https://raw.githubusercontent.com/{GITHUB_REPO}/main/{post['image_local']}"
 log(f"Image URL: {public_url}")
 
+# === HEBREW-IN-IMAGE GUARD ===
+# @linpro.code is the English brand. If the scheduled image contains Hebrew
+# (text overlay carried over from the original Hebrew post), block it.
+# Audit was performed locally with Tesseract OCR (multi-pass) + human verification.
+# Source of truth: image_audit.json in repo root.
+AUDIT_FILE = REPO_ROOT / "image_audit.json"
+if AUDIT_FILE.exists():
+    try:
+        audit = json.loads(AUDIT_FILE.read_text(encoding='utf-8'))
+        img_basename = os.path.basename(post['image_local'])
+        flag_info = audit.get(img_basename, {})
+        if flag_info.get('flagged'):
+            words_or_reason = (
+                flag_info.get('manual_flag')
+                or f"Hebrew words detected: {flag_info.get('heb_words_found', [])}"
+            )
+            log(f"  🚨 BLOCKED — image {img_basename} contains Hebrew text "
+                f"(English account). {words_or_reason}")
+            new_entry = {
+                "post_num": post['post_num'],
+                "publish_date": post['publish_date'],
+                "ig_post_id": None,
+                "fb_post_id": None,
+                "skip_reason": f"Hebrew text on image — needs English replacement. {words_or_reason}",
+                "blocked_at": datetime.now(TZ).strftime('%Y-%m-%d %H:%M:%S'),
+            }
+            if existing:
+                published = [new_entry if e['post_num'] == post['post_num'] else e for e in published]
+            else:
+                published.append(new_entry)
+            PUBLISHED_FILE.write_text(
+                json.dumps(published, indent=2, ensure_ascii=False), encoding='utf-8'
+            )
+            alert_sivan(
+                subject=f"⚠️ Post #{post['post_num']} blocked — Hebrew text on image",
+                body=(
+                    f"שלום סיון,\n\n"
+                    f"חסמתי פרסום של פוסט #{post['post_num']} שמיועד ל-{target_date} בעמוד @linpro.code.\n\n"
+                    f"הסיבה: התמונה ({img_basename}) מכילה טקסט בעברית — אסור לפרסם אותה בחשבון האנגלי.\n\n"
+                    f"מה שזוהה: {words_or_reason}\n\n"
+                    f"מה לעשות:\n"
+                    f"1. תחליפי את {img_basename} בגרסה אנגלית או תמונה ללא טקסט.\n"
+                    f"2. תעדכני את image_audit.json (תסירי את הסימון flagged: true).\n"
+                    f"3. הפרסום יתחדש אוטומטית בהזדמנות הבאה.\n\n"
+                    f"caption (אנגלי, נשמר):\n{post.get('caption','')[:300]}\n"
+                ),
+            )
+            log("  Logged skip + alert sent. Exiting cleanly.")
+            sys.exit(0)
+        log(f"  ✓ image audit clean — no Hebrew text detected")
+    except Exception as e:
+        log(f"  ⚠️ Could not check image_audit.json ({e}) — proceeding anyway")
+else:
+    log(f"  ⚠️ image_audit.json not found — Hebrew guard SKIPPED (run OCR locally + commit)")
+
 # === SIMILARITY GUARD ===
 ig_id = (existing or {}).get("ig_post_id")
 if not ig_id:
