@@ -99,5 +99,13 @@
     "fb_post_id": null,
     "skip_reason": "Hebrew text on image (post_22.jpg) — preemptive block, needs English replacement",
     "blocked_at": "2026-05-02 12:30:00 (preemptive)"
+  },
+  {
+    "post_num": 5,
+    "publish_date": "2026-05-02",
+    "ig_post_id": "18065265353694086",
+    "fb_post_id": null,
+    "published_at": "2026-05-03 00:10:10",
+    "fb_skip_reason": "missing pages_manage_posts (code 200)"
   }
 ]
