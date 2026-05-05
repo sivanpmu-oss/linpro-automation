@@ -115,5 +115,13 @@
     "fb_post_id": null,
     "published_at": "2026-05-04 00:27:19",
     "fb_skip_reason": "missing pages_manage_posts (code 200)"
+  },
+  {
+    "post_num": 8,
+    "publish_date": "2026-05-05",
+    "ig_post_id": "18583312357050744",
+    "fb_post_id": null,
+    "published_at": "2026-05-05 22:00:47",
+    "fb_skip_reason": "missing pages_manage_posts (code 200)"
   }
 ]
