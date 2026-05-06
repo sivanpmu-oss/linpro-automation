@@ -14,5 +14,13 @@
     "fb_post_id": null,
     "published_at": "2026-05-03 15:06:18",
     "fb_skip_reason": "missing pages_manage_posts (code 100)"
+  },
+  {
+    "lesson_num": 3,
+    "publish_date": "2026-05-06",
+    "ig_post_id": "18121288693631362",
+    "fb_post_id": null,
+    "published_at": "2026-05-06 13:31:21",
+    "fb_skip_reason": "missing pages_manage_posts (code 100)"
   }
 ]
