@@ -46,5 +46,13 @@
     "fb_post_id": null,
     "published_at": "2026-05-14 20:14:25",
     "fb_skip_reason": "page token unavailable: Page token not found for 112225864303013"
+  },
+  {
+    "lesson_num": 7,
+    "publish_date": "2026-05-17",
+    "ig_post_id": null,
+    "fb_post_id": null,
+    "published_at": "2026-05-17 13:30:18",
+    "fb_skip_reason": "page token unavailable: Page token not found for 112225864303013"
   }
 ]
