@@ -15,121 +15,41 @@
     "post_num": 3,
     "publish_date": "2026-04-30",
     "ig_post_id": null,
-    "fb_post_id": null,
-    "skip_reason": "duplicate of live post 18339393706168422 from 2026-04-26 (Sivan deleted the auto-published version on 2026-05-01)",
-    "deleted_auto_ig_id": "18174683836398576",
-    "blocked_at": "2026-05-01 09:50:00"
-  },
-  {
-    "post_num": 4,
-    "publish_date": "2026-05-01",
-    "ig_post_id": "17960611250940635",
-    "fb_post_id": null,
-    "published_at": "2026-05-02 00:40:08",
-    "fb_skip_reason": "missing pages_manage_posts (code 200)"
-  },
-  {
-    "post_num": 7,
-    "publish_date": "2026-05-04",
-    "ig_post_id": null,
-    "fb_post_id": null,
-    "skip_reason": "Hebrew text on image (post_07.jpg) — preemptive block, needs English replacement",
-    "blocked_at": "2026-05-02 12:30:00 (preemptive)"
-  },
-  {
-    "post_num": 10,
-    "publish_date": "2026-05-07",
-    "ig_post_id": null,
-    "fb_post_id": null,
-    "skip_reason": "Hebrew text on image (post_10.jpg) — preemptive block, needs English replacement",
-    "blocked_at": "2026-05-02 12:30:00 (preemptive)"
-  },
-  {
-    "post_num": 13,
-    "publish_date": "2026-05-10",
-    "ig_post_id": null,
-    "fb_post_id": null,
-    "skip_reason": "Hebrew text on image (post_13.jpg) — preemptive block, needs English replacement",
-    "blocked_at": "2026-05-02 12:30:00 (preemptive)"
-  },
-  {
-    "post_num": 15,
-    "publish_date": "2026-05-12",
-    "ig_post_id": null,
-    "fb_post_id": null,
-    "skip_reason": "Hebrew text on image (post_15.jpg) — preemptive block, needs English replacement",
-    "blocked_at": "2026-05-02 12:30:00 (preemptive)"
-  },
-  {
-    "post_num": 17,
-    "publish_date": "2026-05-14",
-    "ig_post_id": null,
-    "fb_post_id": null,
-    "skip_reason": "Hebrew text on image (post_17.jpg) — preemptive block, needs English replacement",
-    "blocked_at": "2026-05-02 12:30:00 (preemptive)"
-  },
-  {
-    "post_num": 18,
-    "publish_date": "2026-05-15",
-    "ig_post_id": null,
-    "fb_post_id": null,
-    "skip_reason": "Hebrew text on image (post_18.jpg) — preemptive block, needs English replacement",
-    "blocked_at": "2026-05-02 12:30:00 (preemptive)"
-  },
-  {
-    "post_num": 20,
-    "publish_date": "2026-05-17",
-    "ig_post_id": null,
-    "fb_post_id": null,
-    "skip_reason": "Hebrew text on image (post_20.jpg) — preemptive block, needs English replacement",
-    "blocked_at": "2026-05-02 12:30:00 (preemptive)"
-  },
-  {
-    "post_num": 21,
-    "publish_date": "2026-05-18",
-    "ig_post_id": null,
-    "fb_post_id": null,
-    "skip_reason": "Hebrew text on image (post_21.jpg) — preemptive block, needs English replacement",
-    "blocked_at": "2026-05-02 12:30:00 (preemptive)"
-  },
-  {
-    "post_num": 22,
-    "publish_date": "2026-05-19",
-    "ig_post_id": null,
-    "fb_post_id": null,
-    "skip_reason": "Hebrew text on image (post_22.jpg) — preemptive block, needs English replacement",
-    "blocked_at": "2026-05-02 12:30:00 (preemptive)"
+    "skip_reason": "duplicate of live post from 2026-04-26 (Sivan kept that version)"
   },
   {
     "post_num": 5,
     "publish_date": "2026-05-02",
     "ig_post_id": "18065265353694086",
-    "fb_post_id": null,
     "published_at": "2026-05-03 00:10:10",
-    "fb_skip_reason": "missing pages_manage_posts (code 200)"
+    "fb_skip_reason": "missing pages_manage_posts"
   },
   {
     "post_num": 6,
     "publish_date": "2026-05-03",
     "ig_post_id": "18108666652920977",
-    "fb_post_id": null,
     "published_at": "2026-05-04 00:27:19",
-    "fb_skip_reason": "missing pages_manage_posts (code 200)"
+    "fb_skip_reason": "missing pages_manage_posts"
   },
   {
     "post_num": 8,
     "publish_date": "2026-05-05",
     "ig_post_id": "18583312357050744",
-    "fb_post_id": null,
     "published_at": "2026-05-05 22:00:47",
-    "fb_skip_reason": "missing pages_manage_posts (code 200)"
+    "fb_skip_reason": "missing pages_manage_posts"
   },
   {
     "post_num": 9,
     "publish_date": "2026-05-06",
     "ig_post_id": "17921093460345818",
-    "fb_post_id": null,
     "published_at": "2026-05-06 22:00:46",
-    "fb_skip_reason": "missing pages_manage_posts (code 200)"
+    "fb_skip_reason": "missing pages_manage_posts"
+  },
+  {
+    "post_num": 20,
+    "publish_date": "2026-07-19",
+    "ig_post_id": "18065216156486482",
+    "published_at": "2026-07-19 12:30:59",
+    "note": "manual comeback publish"
   }
 ]

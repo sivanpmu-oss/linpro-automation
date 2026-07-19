@@ -95,13 +95,8 @@
     "heb_word_count": 0
   },
   "post_15.jpg": {
-    "flagged": true,
-    "heb_words_found": [
-      "הקשק",
-      "לושש",
-      "יוּמי"
-    ],
-    "heb_word_count": 3
+    "flagged": false,
+    "note": "human-verified clean 2026-07-19 (ice-block NYC, no text); prior OCR false positive"
   },
   "post_16.jpg": {
     "flagged": false,
@@ -130,11 +125,8 @@
     "heb_word_count": 0
   },
   "post_20.jpg": {
-    "flagged": true,
-    "heb_words_found": [
-      "השיו"
-    ],
-    "heb_word_count": 1
+    "flagged": false,
+    "note": "human-verified clean 2026-07-19 (English WARM/COOL/NEUTRAL labels only); prior OCR false positive"
   },
   "post_21.jpg": {
     "flagged": true,
@@ -158,9 +150,8 @@
     "heb_word_count": 4
   },
   "post_23.jpg": {
-    "flagged": false,
-    "heb_words_found": [],
-    "heb_word_count": 0
+    "flagged": true,
+    "manual_flag": "Hebrew \"קוד האבחון המקצועי\" on laptop screen — human-verified 2026-07-19"
   },
   "post_24.jpg": {
     "flagged": false,
